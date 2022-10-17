@@ -1,3 +1,5 @@
+> **Ce programme est basé sur un template [disponible ici](https://github.com/aghozlane/debruijn-tp).**
+
 # Assembleur basé sur les graphes de Debruijn
 
 Vous trouverez la description complète du TP [ici]( 
