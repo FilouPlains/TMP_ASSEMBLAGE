@@ -104,6 +104,8 @@ def cut_kmer(read, kmer_size):
     for i in range(length_read):
         if i + kmer_size <= length_read:
             yield read[i:i + kmer_size]
+        else:
+            break
 
 
 def build_kmer_dict(fastq_file, kmer_size):
@@ -130,7 +132,19 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
-    pass
+    diagram = nx.DiGraph()
+    kmer_keys = list(kmer_dict.keys())
+
+    for i, key in enumerate(kmer_keys):
+        if i + 1 > len(kmer_keys):
+            break
+        else:
+            left = key[:-1]
+            right = key[1:]
+
+            diagram.add_edge(left, right, weight=kmer_dict[key])
+
+    return diagram
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
@@ -167,11 +181,23 @@ def solve_out_tips(graph, ending_nodes):
 
 
 def get_starting_nodes(graph):
-    pass
+    node_list = []
+
+    for node in graph.nodes():
+        if len(list(graph.predecessors(node))) == 0:
+            node_list += [node]
+
+    return node_list
 
 
 def get_sink_nodes(graph):
-    pass
+    node_list = []
+
+    for node in graph.nodes():
+        if len(list(graph.successors(node))) == 0:
+            node_list += [node]
+
+    return node_list
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
@@ -220,5 +246,28 @@ def save_graph(graph, graph_file):
 if __name__ == '__main__':
     args = get_arguments()
 
-    kmer_dic = build_kmer_dict(args["fastq_file"], 3)
-    print(kmer_dic)
+    kmer_dic = build_kmer_dict(args["fastq_file"], 5)
+
+    diagram = build_graph(kmer_dic)
+    
+    starting_nodes = get_starting_nodes(diagram)
+    ending_nodes = get_sink_nodes(diagram)
+    contigs = get_contigs(diagram, starting_nodes, ending_nodes)
+
+    # position = nx.spring_layout(diagram, seed=9001)
+
+    # nodes = nx.draw_networkx_nodes(
+    #     diagram,
+    #     position
+    # )
+    # edges = nx.draw_networkx_edges(
+    #     diagram,
+    #     position
+    # )
+
+    # pc = matplotlib.collections.PatchCollection(edges, cmap=plt.cm.plasma)
+
+    # ax = plt.gca()
+    # ax.set_axis_off()
+    # plt.colorbar(pc, ax=ax)
+    # plt.show()
