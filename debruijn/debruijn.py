@@ -89,17 +89,18 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    with open(fastq_file, "r") as file:
-        seq = []
-
+    """Read a fastq file.
+    """
+    with open(fastq_file, "r", encoding="utf-8") as file:
         for line in file:
             if line[0] in ["A", "T", "C", "G"]:
                 yield line.strip()
 
 
 def cut_kmer(read, kmer_size):
+    """Cut a sequence in "k" mers.
+    """
     length_read = len(read)
-    kmer = []
 
     for i in range(length_read):
         if i + kmer_size <= length_read:
@@ -109,6 +110,8 @@ def cut_kmer(read, kmer_size):
 
 
 def build_kmer_dict(fastq_file, kmer_size):
+    """Input a fastq file, output a kmer_dic.
+    """
     kmer_dic = {}
     whole_seq = ""
     kmer_list = []
@@ -132,6 +135,8 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
+    """Build a `networkx` graph.
+    """
     diagram = nx.DiGraph()
     kmer_keys = list(kmer_dict.keys())
 
@@ -148,20 +153,72 @@ def build_graph(kmer_dict):
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
-    pass
+    """Remove a given path from the graph.
+    """
+    left = 1 - int(delete_entry_node)
+
+    if isinstance(path_list[0], int):
+        path_list = [path_list]
+
+    for path in path_list:
+        if delete_sink_node:
+            graph.remove_nodes_from(path[left:-1])
+        else:
+            graph.remove_nodes_from(path[left:])
+
+    return graph
 
 
 def std(data):
-    pass
+    return statistics.stdev(data)
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
-    pass
+    for i, path_i in enumerate(path_list):
+        for j, path_j in enumerate(path_list):
+            std_val = std([weight_avg_list[i], weight_avg_list[j]])
+
+            if std_val > 0:
+                if weight_avg_list[i] > weight_avg_list[j]:
+                    graph = remove_paths(graph, path_j, delete_entry_node,
+                                         delete_sink_node)
+                else:
+                    graph = remove_paths(graph, path_i, delete_entry_node,
+                                         delete_sink_node)
+            else:
+                length = std([path_length[i], path_length[j]])
+
+                if length > 0:
+                    if path_length[i] > path_length[j]:
+                        graph = remove_paths(graph, path_j, delete_entry_node,
+                                             delete_sink_node)
+                    else:
+                        graph = remove_paths(graph, path_i, delete_entry_node,
+                                             delete_sink_node)
+                else:
+                    alea_val = randint(0, 1)
+
+                    if alea_val == 0:
+                        graph = remove_paths(graph, path_j, delete_entry_node,
+                                               delete_sink_node)
+                    else:
+                        graph = remove_paths(graph, path_i, delete_entry_node,
+                                               delete_sink_node)
+
+    return graph
 
 
 def path_average_weight(graph, path):
-    pass
+    """Return average weight of a given path.
+    """
+    subgraph = graph.subgraph(path).edges(data=True)
+    sum = 0
+
+    for path_unit in subgraph:
+        sum += path_unit[2]["weight"]
+
+    return sum / len(subgraph)
 
 
 def solve_bubble(graph, ancestor_node, descendant_node):
@@ -181,6 +238,8 @@ def solve_out_tips(graph, ending_nodes):
 
 
 def get_starting_nodes(graph):
+    """Return all starting nodes.
+    """
     node_list = []
 
     for node in graph.nodes():
@@ -191,6 +250,8 @@ def get_starting_nodes(graph):
 
 
 def get_sink_nodes(graph):
+    """Return all ending nodes.
+    """
     node_list = []
 
     for node in graph.nodes():
@@ -201,6 +262,8 @@ def get_sink_nodes(graph):
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
+    """Give all possible contigs.
+    """
     list_contigs = []
 
     for start in starting_nodes:
@@ -215,14 +278,18 @@ def get_contigs(graph, starting_nodes, ending_nodes):
 
 
 def save_contigs(contigs_list, output_file):
-    with open(output_file, "w") as file:
+    """Save the contigs.
+    """
+    with open(output_file, "w", encoding="utf-8") as file:
         for i, sequence in enumerate(contigs_list):
             file.write(f">contig_{i} len={sequence[1]}\n")
             file.write(fill(sequence[0]))
             file.write("\n")
 
+
 def fill(text, width=80):
-    """Split text with a line return to respect fasta format"""
+    """Split text with a line return to respect fasta format.
+    """
     return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
 
 
@@ -252,23 +319,36 @@ def draw_graph(graph, graphimg_file):
 def save_graph(graph, graph_file):
     """Save the graph with pickle
     """
-    with open(graph_file, "wt") as save:
+    with open(graph_file, "wt", encoding="utf-8") as save:
         pickle.dump(graph, save)
 
 
-if __name__ == '__main__':
-    args = get_arguments()
+if __name__ == "__main__":
+    # Each main variable start with a `m_`.
+    m_args = get_arguments()
 
-    kmer_dic = build_kmer_dict(args["fastq_file"], 6)
+    m_kmer_dic = build_kmer_dict(m_args["fastq_file"], m_args["kmer_size"])
 
-    diagram = build_graph(kmer_dic)
+    m_diagram = build_graph(m_kmer_dic)
 
-    starting_nodes = get_starting_nodes(diagram)
-    ending_nodes = get_sink_nodes(diagram)
+    m_starting_nodes = get_starting_nodes(m_diagram)
+    m_ending_nodes = get_sink_nodes(m_diagram)
 
-    contigs = get_contigs(diagram, starting_nodes, ending_nodes)
+    m_contigs = get_contigs(m_diagram, m_starting_nodes, m_ending_nodes)
+
+    save_contigs(m_contigs, "test.fasta")
+
+    path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
+                                    m_ending_nodes[0])
+
+    m_length = [96, 69, 43, 50, 57, 30]
+    m_mean = [96 / 5, 69 / 5, 43 / 5, 50 / 5, 57 / 5, 30 / 5]
     
-    save_contigs(contigs, "test.fasta")
+    print(m_diagram)
+
+    select_best_path(m_diagram, path_list, m_length, m_mean, True, False)
+    
+    print(m_diagram)
 
     # position = nx.spring_layout(diagram, seed=9001)
 
