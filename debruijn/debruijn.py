@@ -157,14 +157,11 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     """
     left = 1 - int(delete_entry_node)
 
-    if isinstance(path_list[0], int):
-        path_list = [path_list]
-
     for path in path_list:
         if delete_sink_node:
-            graph.remove_nodes_from(path[left:-1])
-        else:
             graph.remove_nodes_from(path[left:])
+        else:
+            graph.remove_nodes_from(path[left:-1])
 
     return graph
 
@@ -175,38 +172,31 @@ def std(data):
 
 def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
-    for i, path_i in enumerate(path_list):
-        for j, path_j in enumerate(path_list):
-            std_val = std([weight_avg_list[i], weight_avg_list[j]])
+    """Select the best past between a given input path list.
+    """
+    w_max = max(weight_avg_list)
+    index = []
 
-            if std_val > 0:
-                if weight_avg_list[i] > weight_avg_list[j]:
-                    graph = remove_paths(graph, path_j, delete_entry_node,
-                                         delete_sink_node)
-                else:
-                    graph = remove_paths(graph, path_i, delete_entry_node,
-                                         delete_sink_node)
-            else:
-                length = std([path_length[i], path_length[j]])
+    for i, j in enumerate(weight_avg_list):
+        if j == w_max:
+            index += [i]
 
-                if length > 0:
-                    if path_length[i] > path_length[j]:
-                        graph = remove_paths(graph, path_j, delete_entry_node,
-                                             delete_sink_node)
-                    else:
-                        graph = remove_paths(graph, path_i, delete_entry_node,
-                                             delete_sink_node)
-                else:
-                    alea_val = randint(0, 1)
+    if len(index) > 1:
+        l_max = max(path_length)
+        shift_index = []
 
-                    if alea_val == 0:
-                        graph = remove_paths(graph, path_j, delete_entry_node,
-                                               delete_sink_node)
-                    else:
-                        graph = remove_paths(graph, path_i, delete_entry_node,
-                                               delete_sink_node)
+        for i in index:
+            if path_length[i] == l_max:
+                shift_index += [i]
 
-    return graph
+        best_i = random.choice(shift_index)
+    else:
+        best_i = index[0]
+
+    cp_path = path_list
+    cp_path.pop(best_i)
+
+    return remove_paths(graph, cp_path, delete_entry_node, delete_sink_node)
 
 
 def path_average_weight(graph, path):
@@ -338,16 +328,16 @@ if __name__ == "__main__":
 
     save_contigs(m_contigs, "test.fasta")
 
-    path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
-                                    m_ending_nodes[0])
+    m_path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
+                                      m_ending_nodes[0])
 
     m_length = [96, 69, 43, 50, 57, 30]
     m_mean = [96 / 5, 69 / 5, 43 / 5, 50 / 5, 57 / 5, 30 / 5]
-    
+
     print(m_diagram)
 
-    select_best_path(m_diagram, path_list, m_length, m_mean, True, False)
-    
+    select_best_path(m_diagram, m_path_list, m_length, m_mean, True, False)
+
     print(m_diagram)
 
     # position = nx.spring_layout(diagram, seed=9001)
