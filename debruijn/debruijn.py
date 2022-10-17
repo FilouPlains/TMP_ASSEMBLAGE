@@ -14,14 +14,6 @@
 #    http://www.gnu.org/licenses/gpl-3.0.html
 
 # ===============
-# FROM * IMPORT *
-# ===============
-# [O]
-from operator import itemgetter
-# [R]
-from random import randint
-
-# ===============
 # IMPORT *
 # ===============
 # STANDARD IMPORT
@@ -32,19 +24,14 @@ import os
 import random
 # [S]
 import statistics
-import sys
 
 # OTHER IMPORT
 # [A]
 import argparse
 # [N]
 import networkx as nx
-# [M]
-import matplotlib
-import matplotlib.pyplot as plt
 
 random.seed(9001)
-matplotlib.use("Agg")
 
 __author__ = "Your Name"
 __copyright__ = "Universite Paris Diderot"
@@ -63,9 +50,9 @@ def isfile(path):
     """
     if not os.path.isfile(path):
         if os.path.isdir(path):
-            msg = "{0} is a directory".format(path)
+            msg = f"{path} is a directory."
         else:
-            msg = "{0} does not exist.".format(path)
+            msg = f"{path} does not exist."
         raise argparse.ArgumentTypeError(msg)
     return path
 
@@ -143,11 +130,11 @@ def build_graph(kmer_dict):
     for i, key in enumerate(kmer_keys):
         if i + 1 > len(kmer_keys):
             break
-        else:
-            left = key[:-1]
-            right = key[1:]
 
-            diagram.add_edge(left, right, weight=kmer_dict[key])
+        left = key[:-1]
+        right = key[1:]
+
+        diagram.add_edge(left, right, weight=kmer_dict[key])
 
     return diagram
 
@@ -167,6 +154,8 @@ def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
 
 
 def std(data):
+    """Return the standard deviation of a given list.
+    """
     return statistics.stdev(data)
 
 
@@ -203,28 +192,36 @@ def path_average_weight(graph, path):
     """Return average weight of a given path.
     """
     subgraph = graph.subgraph(path).edges(data=True)
-    sum = 0
+    summation = 0
 
     for path_unit in subgraph:
-        sum += path_unit[2]["weight"]
+        summation += path_unit[2]["weight"]
 
-    return sum / len(subgraph)
+    return summation / len(subgraph)
 
 
 def solve_bubble(graph, ancestor_node, descendant_node):
-    pass
+    """Solve a bubble in `networkx`.
+    """
+    return (graph, ancestor_node, descendant_node)
 
 
 def simplify_bubbles(graph):
-    pass
+    """Solve a bubble in `networkx` (simple case).
+    """
+    return graph
 
 
 def solve_entry_tips(graph, starting_nodes):
-    pass
+    """Solve in entry.
+    """
+    return (graph, starting_nodes)
 
 
 def solve_out_tips(graph, ending_nodes):
-    pass
+    """Solve out entry.
+    """
+    return (graph, ending_nodes)
 
 
 def get_starting_nodes(graph):
@@ -283,29 +280,6 @@ def fill(text, width=80):
     return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
 
 
-def draw_graph(graph, graphimg_file):
-    """Draw the graph
-    """
-    fig, ax = plt.subplots()
-    elarge = [(u, v)
-              for (u, v, d) in graph.edges(data=True) if d['weight'] > 3]
-    # print(elarge)
-    esmall = [(u, v)
-              for (u, v, d) in graph.edges(data=True) if d['weight'] <= 3]
-    # print(elarge)
-
-    # Draw the graph with networkx++
-    # pos=nx.spring_layout(graph)
-    pos = nx.random_layout(graph)
-    nx.draw_networkx_nodes(graph, pos, node_size=6)
-    nx.draw_networkx_edges(graph, pos, edgelist=elarge, width=6)
-    nx.draw_networkx_edges(graph, pos, edgelist=esmall, width=6, alpha=0.5,
-                           edge_color='b', style='dashed')
-    #nx.draw_networkx(graph, pos, node_size=10, with_labels=False)
-    # save image
-    plt.savefig(graphimg_file)
-
-
 def save_graph(graph, graph_file):
     """Save the graph with pickle
     """
@@ -330,30 +304,3 @@ if __name__ == "__main__":
 
     m_path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
                                       m_ending_nodes[0])
-
-    m_length = [96, 69, 43, 50, 57, 30]
-    m_mean = [96 / 5, 69 / 5, 43 / 5, 50 / 5, 57 / 5, 30 / 5]
-
-    print(m_diagram)
-
-    select_best_path(m_diagram, m_path_list, m_length, m_mean, True, False)
-
-    print(m_diagram)
-
-    # position = nx.spring_layout(diagram, seed=9001)
-
-    # nodes = nx.draw_networkx_nodes(
-    #     diagram,
-    #     position
-    # )
-    # edges = nx.draw_networkx_edges(
-    #     diagram,
-    #     position
-    # )
-
-    # pc = matplotlib.collections.PatchCollection(edges, cmap=plt.cm.plasma)
-
-    # ax = plt.gca()
-    # ax.set_axis_off()
-    # plt.colorbar(pc, ax=ax)
-    # plt.show()
