@@ -201,12 +201,25 @@ def get_sink_nodes(graph):
 
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+    list_contigs = []
+
+    for start in starting_nodes:
+        for end in ending_nodes:
+            path = nx.all_simple_paths(graph, start, end)
+
+            for path_unit in path:
+                contig = "".join(path_unit[::len(path_unit[0])])
+                list_contigs += [(contig, len(contig))]
+
+    return list_contigs
 
 
 def save_contigs(contigs_list, output_file):
-    pass
-
+    with open(output_file, "w") as file:
+        for i, sequence in enumerate(contigs_list):
+            file.write(f">contig_{i} len={sequence[1]}\n")
+            file.write(fill(sequence[0]))
+            file.write("\n")
 
 def fill(text, width=80):
     """Split text with a line return to respect fasta format"""
@@ -246,13 +259,16 @@ def save_graph(graph, graph_file):
 if __name__ == '__main__':
     args = get_arguments()
 
-    kmer_dic = build_kmer_dict(args["fastq_file"], 5)
+    kmer_dic = build_kmer_dict(args["fastq_file"], 6)
 
     diagram = build_graph(kmer_dic)
-    
+
     starting_nodes = get_starting_nodes(diagram)
     ending_nodes = get_sink_nodes(diagram)
+
     contigs = get_contigs(diagram, starting_nodes, ending_nodes)
+    
+    save_contigs(contigs, "test.fasta")
 
     # position = nx.spring_layout(diagram, seed=9001)
 
