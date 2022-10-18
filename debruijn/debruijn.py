@@ -33,13 +33,11 @@ import networkx as nx
 
 random.seed(9001)
 
-__author__ = "Your Name"
-__copyright__ = "Universite Paris Diderot"
-__credits__ = ["Your Name"]
-__license__ = "GPL"
+__author__ = "ROUAUD Lucas"
+__credits__ = __author__
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = __author__
+__email__ = "lucas.rouaud@gmail.com"
 __status__ = "Developpement"
 
 
@@ -203,7 +201,19 @@ def path_average_weight(graph, path):
 def solve_bubble(graph, ancestor_node, descendant_node):
     """Solve a bubble in `networkx`.
     """
-    return (graph, ancestor_node, descendant_node)
+    w_list = []
+    p_len = []
+
+    p_list = list(nx.all_simple_paths(graph, ancestor_node, descendant_node))
+
+    for path in p_list:
+        p_len += [len(path)]
+
+        w_list += [path_average_weight(graph, path)]
+
+    graph = select_best_path(graph, p_list, p_len, w_list, False, False)
+
+    return graph
 
 
 def simplify_bubbles(graph):
@@ -304,3 +314,4 @@ if __name__ == "__main__":
 
     m_path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
                                       m_ending_nodes[0])
+    
