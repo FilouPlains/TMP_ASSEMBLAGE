@@ -217,8 +217,44 @@ def solve_bubble(graph, ancestor_node, descendant_node):
 
 
 def simplify_bubbles(graph):
-    """Solve a bubble in `networkx` (simple case).
+    """Simplify all bubble in a `networkx` network.
     """
+    for node in graph.nodes():
+        precursor_list = list(graph.predecessors(node))
+
+        if len(precursor_list) < 1:
+            continue
+
+
+        for precursor in precursor_list:
+            print(f"node: {node}")
+            print(f"precursor: {precursor}")
+            print(nx.lowest_common_ancestor(graph, node, precursor))
+
+
+
+    # is_bubble = False
+
+    # for node in graph.nodes():
+    #     end_node = node
+
+    #     if graph.degree(node) > 0:
+    #         precursor = graph.predecessors(node)
+
+    #         if len(list(precursor)) > 1:
+    #             for precur_node in precursor:
+    #                 ancest_node = nx.lowest_common_ancestor(graph, end_node,
+    #                                                         precur_node)
+
+    #                 if ancest_node is not None:
+    #                     is_bubble = True
+    #                     break
+    #         if is_bubble:
+    #             break
+
+    # if is_bubble:
+    #     graph = simplify_bubbles(solve_bubble(graph, end, end_node))
+
     return graph
 
 
@@ -314,4 +350,6 @@ if __name__ == "__main__":
 
     m_path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
                                       m_ending_nodes[0])
+    
+    simplify_bubbles(m_diagram)
     
