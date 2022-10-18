@@ -208,10 +208,9 @@ def solve_bubble(graph, ancestor_node, descendant_node):
 
     for path in p_list:
         p_len += [len(path)]
-
         w_list += [path_average_weight(graph, path)]
 
-    graph = select_best_path(graph, p_list, p_len, w_list, False, False)
+    graph = select_best_path(graph, p_list, p_len, w_list)
 
     return graph
 
@@ -219,41 +218,27 @@ def solve_bubble(graph, ancestor_node, descendant_node):
 def simplify_bubbles(graph):
     """Simplify all bubble in a `networkx` network.
     """
-    for node in graph.nodes():
-        precursor_list = list(graph.predecessors(node))
+    buble_to_clear = False
 
-        if len(precursor_list) < 1:
-            continue
+    for node in graph:
+        node_n = node
 
+        if graph.in_degree(node) >= 2:
+            node_pred = []
 
-        for precursor in precursor_list:
-            print(f"node: {node}")
-            print(f"precursor: {precursor}")
-            print(nx.lowest_common_ancestor(graph, node, precursor))
+            for node in graph.predecessors(node):
+                node_pred += [node]
 
+            if len(node_pred) <= 2:
+                buble_to_clear = True
+                break
 
+        if buble_to_clear:
+            break
 
-    # is_bubble = False
-
-    # for node in graph.nodes():
-    #     end_node = node
-
-    #     if graph.degree(node) > 0:
-    #         precursor = graph.predecessors(node)
-
-    #         if len(list(precursor)) > 1:
-    #             for precur_node in precursor:
-    #                 ancest_node = nx.lowest_common_ancestor(graph, end_node,
-    #                                                         precur_node)
-
-    #                 if ancest_node is not None:
-    #                     is_bubble = True
-    #                     break
-    #         if is_bubble:
-    #             break
-
-    # if is_bubble:
-    #     graph = simplify_bubbles(solve_bubble(graph, end, end_node))
+    if not buble_to_clear:
+        ancestor = nx.lowest_common_ancestor(graph, node_pred[0], node_pred[1])
+        graph = solve_bubble(graph, ancestor, node_n)
 
     return graph
 
