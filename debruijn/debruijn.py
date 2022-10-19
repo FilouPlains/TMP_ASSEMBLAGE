@@ -246,7 +246,20 @@ def simplify_bubbles(graph):
 def solve_entry_tips(graph, starting_nodes):
     """Solve in entry.
     """
-    return (graph, starting_nodes)
+    sub_graph = nx.strongly_connected_components(graph)
+    to_list = sub_graph
+    main_graph = list(to_list)[0]
+
+    # find the largest network in that list
+    for sub in sub_graph:
+        if len(sub.nodes()) < len(main_graph.nodes()):
+            main_graph = sub
+        elif len(sub.nodes()) == len(main_graph.nodes()):
+            if path_average_weight(graph, sub.nodes()) \
+                < path_average_weight(graph, main_graph.nodes()):
+                main_graph = sub
+
+    return (graph.subgraph(main_graph), starting_nodes)
 
 
 def solve_out_tips(graph, ending_nodes):
@@ -335,6 +348,6 @@ if __name__ == "__main__":
 
     m_path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
                                       m_ending_nodes[0])
-    
+
     simplify_bubbles(m_diagram)
     
