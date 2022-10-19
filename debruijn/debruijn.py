@@ -258,7 +258,8 @@ def solve_entry_tips(graph, starting_nodes):
     a_list = []
 
     for node in n_list:
-        a_list += [nx.lowest_common_ancestor(graph.reverse(), node[0], node[1])]
+        a_list += [nx.lowest_common_ancestor(graph.reverse(),
+                                             node[0], node[1])]
 
     p_list = []
     w_list = []
@@ -274,11 +275,6 @@ def solve_entry_tips(graph, starting_nodes):
         w_list += [path_average_weight(graph, path_1),
                    path_average_weight(graph, path_2)]
 
-    print(f"{p_list=}")
-    print(f"{p_len=}")
-    print(f"{w_list=}")
-
-
     graph = select_best_path(graph, p_list, p_len, w_list,
                              delete_entry_node=True)
 
@@ -288,7 +284,38 @@ def solve_entry_tips(graph, starting_nodes):
 def solve_out_tips(graph, ending_nodes):
     """Solve out entry.
     """
-    return (graph, ending_nodes)
+    n_list = []
+
+    if len(ending_nodes) > 2:
+        for n_i in ending_nodes:
+            for n_j in ending_nodes:
+                n_list += [(n_i, n_j)]
+    else:
+        n_list = [tuple(ending_nodes)]
+
+    a_list = []
+
+    for node in n_list:
+        a_list += [nx.lowest_common_ancestor(graph, node[0], node[1])]
+
+    p_list = []
+    w_list = []
+    p_len = []
+
+    for i, node in enumerate(n_list):
+        path_1 = list(nx.all_simple_paths(graph, a_list[i], node[0]))[0]
+        path_2 = list(nx.all_simple_paths(graph, a_list[i], node[1]))[0]
+
+        p_list += [path_1, path_2]
+
+        p_len += [len(path_1), len(path_2)]
+        w_list += [path_average_weight(graph, path_1),
+                   path_average_weight(graph, path_2)]
+
+    graph = select_best_path(graph, p_list, p_len, w_list,
+                             delete_sink_node=True)
+
+    return graph
 
 
 def get_starting_nodes(graph):
@@ -373,8 +400,7 @@ if __name__ == "__main__":
                                       m_ending_nodes[0])
 
     simplify_bubbles(m_diagram)
-    
-    
+
     graph_1 = nx.DiGraph()
     graph_1.add_weighted_edges_from([(1, 2, 10), (3, 2, 2), (2, 4, 15),
                                      (4, 5, 15)])
