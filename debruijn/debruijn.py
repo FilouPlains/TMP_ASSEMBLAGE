@@ -226,8 +226,8 @@ def simplify_bubbles(graph):
         if graph.in_degree(node) >= 2:
             node_pred = []
 
-            for node in graph.predecessors(node):
-                node_pred += [node]
+            for node_unit in graph.predecessors(node):
+                node_pred += [node_unit]
 
             if len(node_pred) <= 2:
                 buble_to_clear = True
@@ -246,20 +246,43 @@ def simplify_bubbles(graph):
 def solve_entry_tips(graph, starting_nodes):
     """Solve in entry.
     """
-    sub_graph = nx.strongly_connected_components(graph)
-    to_list = sub_graph
-    main_graph = list(to_list)[0]
+    n_list = []
 
-    # find the largest network in that list
-    for sub in sub_graph:
-        if len(sub.nodes()) < len(main_graph.nodes()):
-            main_graph = sub
-        elif len(sub.nodes()) == len(main_graph.nodes()):
-            if path_average_weight(graph, sub.nodes()) \
-                < path_average_weight(graph, main_graph.nodes()):
-                main_graph = sub
+    if len(starting_nodes) > 2:
+        for n_i in starting_nodes:
+            for n_j in starting_nodes:
+                n_list += [(n_i, n_j)]
+    else:
+        n_list = [tuple(starting_nodes)]
 
-    return (graph.subgraph(main_graph), starting_nodes)
+    a_list = []
+
+    for node in n_list:
+        a_list += [nx.lowest_common_ancestor(graph.reverse(), node[0], node[1])]
+
+    p_list = []
+    w_list = []
+    p_len = []
+
+    for i, node in enumerate(n_list):
+        path_1 = list(nx.all_simple_paths(graph, node[0], a_list[i]))[0]
+        path_2 = list(nx.all_simple_paths(graph, node[1], a_list[i]))[0]
+
+        p_list += [path_1, path_2]
+
+        p_len += [len(path_1), len(path_2)]
+        w_list += [path_average_weight(graph, path_1),
+                   path_average_weight(graph, path_2)]
+
+    print(f"{p_list=}")
+    print(f"{p_len=}")
+    print(f"{w_list=}")
+
+
+    graph = select_best_path(graph, p_list, p_len, w_list,
+                             delete_entry_node=True)
+
+    return graph
 
 
 def solve_out_tips(graph, ending_nodes):
@@ -351,3 +374,8 @@ if __name__ == "__main__":
 
     simplify_bubbles(m_diagram)
     
+    
+    graph_1 = nx.DiGraph()
+    graph_1.add_weighted_edges_from([(1, 2, 10), (3, 2, 2), (2, 4, 15),
+                                     (4, 5, 15)])
+    graph_1 = solve_entry_tips(graph_1, [1, 3])
