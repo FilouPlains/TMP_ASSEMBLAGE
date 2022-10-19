@@ -28,6 +28,9 @@ import statistics
 # OTHER IMPORT
 # [A]
 import argparse
+# [M]
+import matplotlib
+import matplotlib.pyplot as plt
 # [N]
 import networkx as nx
 
@@ -38,7 +41,9 @@ __credits__ = __author__
 __version__ = "1.0.0"
 __maintainer__ = __author__
 __email__ = "lucas.rouaud@gmail.com"
-__status__ = "Developpement"
+__status__ = "DONE"
+
+matplotlib.use("Agg")
 
 
 def isfile(path):
@@ -318,6 +323,24 @@ def solve_out_tips(graph, ending_nodes):
     return graph
 
 
+def draw_graph(graph, graphimg_file):
+    """Draw the graph
+    """
+    elarge = [(u, v) for (u, v, d) in graph.edges(data=True)
+              if d["weight"] > 3]
+    esmall = [(u, v) for (u, v, d) in graph.edges(data=True)
+              if d["weight"] <= 3]
+
+    pos = nx.random_layout(graph)
+
+    nx.draw_networkx_nodes(graph, pos, node_size=6)
+    nx.draw_networkx_edges(graph, pos, edgelist=elarge, width=6)
+    nx.draw_networkx_edges(graph, pos, edgelist=esmall, width=6, alpha=0.5,
+                           edge_color="b", style="dashed")
+
+    plt.savefig(graphimg_file)
+
+
 def get_starting_nodes(graph):
     """Return all starting nodes.
     """
@@ -385,23 +408,27 @@ if __name__ == "__main__":
     # Each main variable start with a `m_`.
     m_args = get_arguments()
 
+    # `k_mer` dic.
     m_kmer_dic = build_kmer_dict(m_args["fastq_file"], m_args["kmer_size"])
 
+    # Create the diagram.
     m_diagram = build_graph(m_kmer_dic)
 
+    # Cleaning.
+    m_diagram = simplify_bubbles(m_diagram)
+
     m_starting_nodes = get_starting_nodes(m_diagram)
+    m_diagram = solve_entry_tips(m_diagram, m_starting_nodes)
+
     m_ending_nodes = get_sink_nodes(m_diagram)
+    m_diagram = solve_out_tips(m_diagram, m_ending_nodes)
 
+    # Getting contigs.
     m_contigs = get_contigs(m_diagram, m_starting_nodes, m_ending_nodes)
-
     save_contigs(m_contigs, "test.fasta")
 
-    m_path_list = nx.all_simple_paths(m_diagram, m_starting_nodes[0],
-                                      m_ending_nodes[0])
+    if m_args["graphimg_file"] is not None:
+        draw_graph(m_diagram, m_args["graphimg_file"])
 
-    simplify_bubbles(m_diagram)
-
-    graph_1 = nx.DiGraph()
-    graph_1.add_weighted_edges_from([(1, 2, 10), (3, 2, 2), (2, 4, 15),
-                                     (4, 5, 15)])
-    graph_1 = solve_entry_tips(graph_1, [1, 3])
+    if m_args["output_file"] is not None:
+        save_graph(m_diagram, m_args["output_file"])
